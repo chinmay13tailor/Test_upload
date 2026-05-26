@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Excel Upload Widget</title>
+
+    <!-- XLSX Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+
+        *{
+            box-sizing:border-box;
+        }
+
+        body{
+
+            margin:0;
+            padding:30px;
+            font-family:'Segoe UI',sans-serif;
+            background:#f2f4f7;
+
+        }
+
+        .container{
+
+            width:100%;
+            background:#ffffff;
+            padding:25px;
+            border-radius:12px;
+            box-shadow:0 4px 15px rgba(0,0,0,0.08);
+
+        }
+
+        h2{
+
+            margin-top:0;
+            color:#222;
+
+        }
+
+        .upload-section{
+
+            display:flex;
+            gap:15px;
+            align-items:center;
+            flex-wrap:wrap;
+            margin-bottom:25px;
+
+        }
+
+        input[type="file"]{
+
+            padding:8px;
+            border:1px solid #ccc;
+            border-radius:6px;
+            background:#fff;
+
+        }
+
+        button{
+
+            padding:10px 20px;
+            border:none;
+            border-radius:6px;
+            background:#1976d2;
+            color:white;
+            font-weight:600;
+            cursor:pointer;
+
+        }
+
+        button:hover{
+
+            background:#1258a8;
+
+        }
+
+        table{
+
+            width:100%;
+            border-collapse:collapse;
+
+        }
+
+        table th{
+
+            background:#1976d2;
+            color:white;
+            padding:12px;
+            border:1px solid #ddd;
+
+        }
+
+        table td{
+
+            padding:10px;
+            border:1px solid #ddd;
+            text-align:center;
+
+        }
+
+        table tr:nth-child(even){
+
+            background:#f9f9f9;
+
+        }
+
+        .hidden{
+
+            display:none;
+
+        }
+
+        .summary{
+
+            margin-bottom:15px;
+            font-weight:600;
+            color:#333;
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h2>Excel Upload & View</h2>
+
+        <div class="upload-section">
+
+            <input type="file" id="excelFile" accept=".xlsx,.xls">
+
+            <button onclick="viewExcelData()">View Data</button>
+
+        </div>
+
+        <div class="summary hidden" id="summary"></div>
+
+        <div id="tableContainer"></div>
+
+    </div>
+
+    <script>
+
+        let excelData = [];
+
+        function viewExcelData(){
+
+            const fileInput = document.getElementById("excelFile");
+
+            const file = fileInput.files[0];
+
+            if(!file){
+
+                alert("Please select Excel file");
+
+                return;
+
+            }
+
+            const reader = new FileReader();
+
+            reader.onload = function(e){
+
+                const data = new Uint8Array(e.target.result);
+
+                const workbook = XLSX.read(data, { type: 'array' });
+
+                const sheetName = workbook.SheetNames[0];
+
+                const worksheet = workbook.Sheets[sheetName];
+
+                excelData = XLSX.utils.sheet_to_json(worksheet);
+
+                console.log(excelData);
+
+                generateTable(excelData);
+
+            };
+
+            reader.readAsArrayBuffer(file);
+
+        }
+
+        function generateTable(data){
+
+            if(data.length === 0){
+
+                alert("No data found in Excel");
+
+                return;
+
+            }
+
+            const headers = Object.keys(data[0]);
+
+            let html = "";
+
+            html += "<table>";
+
+            html += "<thead><tr>";
+
+            headers.forEach(header => {
+
+                html += `<th>${header}</th>`;
+
+            });
+
+            html += "</tr></thead>";
+
+            html += "<tbody>";
+
+            data.forEach(row => {
+
+                html += "<tr>";
+
+                headers.forEach(header => {
+
+                    html += `<td>${row[header] ?? ""}</td>`;
+
+                });
+
+                html += "</tr>";
+
+            });
+
+            html += "</tbody>";
+
+            html += "</table>";
+
+            document.getElementById("summary").classList.remove("hidden");
+
+            document.getElementById("summary").innerHTML =
+                `Total Records : ${data.length}`;
+
+            document.getElementById("tableContainer").innerHTML = html;
+
+        }
+
+    </script>
+
+</body>
+
+</html>
