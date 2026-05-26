@@ -41,6 +41,7 @@
 
             margin-top:0;
             color:#222;
+            margin-bottom:25px;
 
         }
 
@@ -65,13 +66,14 @@
 
         button{
 
-            padding:10px 20px;
+            padding:10px 22px;
             border:none;
             border-radius:6px;
             background:#1976d2;
             color:white;
             font-weight:600;
             cursor:pointer;
+            transition:0.2s;
 
         }
 
@@ -94,6 +96,7 @@
             color:white;
             padding:12px;
             border:1px solid #ddd;
+            font-size:14px;
 
         }
 
@@ -102,6 +105,7 @@
             padding:10px;
             border:1px solid #ddd;
             text-align:center;
+            font-size:14px;
 
         }
 
@@ -122,6 +126,21 @@
             margin-bottom:15px;
             font-weight:600;
             color:#333;
+            font-size:16px;
+
+        }
+
+        .table-wrapper{
+
+            overflow-x:auto;
+
+        }
+
+        .status{
+
+            margin-top:15px;
+            color:green;
+            font-weight:600;
 
         }
 
@@ -145,7 +164,11 @@
 
         <div class="summary hidden" id="summary"></div>
 
-        <div id="tableContainer"></div>
+        <div class="table-wrapper">
+            <div id="tableContainer"></div>
+        </div>
+
+        <div class="status" id="status"></div>
 
     </div>
 
@@ -167,6 +190,8 @@
 
             }
 
+            document.getElementById("status").innerHTML = "";
+
             const reader = new FileReader();
 
             reader.onload = function(e){
@@ -179,9 +204,52 @@
 
                 const worksheet = workbook.Sheets[sheetName];
 
-                excelData = XLSX.utils.sheet_to_json(worksheet, {
-                    raw: false,
-                    dateNF: 'yyyy-mm-dd'
+                excelData = XLSX.utils.sheet_to_json(worksheet);
+
+                /* DATE FORMAT CONVERSION */
+
+                excelData = excelData.map((row,index) => {
+
+                    /* SR NO */
+
+                    row["Sr No"] = index + 1;
+
+                    /* DATE FORMAT */
+
+                    if(row["Date"]){
+
+                        let jsDate;
+
+                        /* EXCEL SERIAL DATE */
+
+                        if(!isNaN(row["Date"])){
+
+                            const excelDate = Number(row["Date"]);
+
+                            jsDate = new Date((excelDate - 25569) * 86400 * 1000);
+
+                        }
+
+                        /* NORMAL DATE */
+
+                        else{
+
+                            jsDate = new Date(row["Date"]);
+
+                        }
+
+                        const day = String(jsDate.getDate()).padStart(2,'0');
+
+                        const month = String(jsDate.getMonth() + 1).padStart(2,'0');
+
+                        const year = jsDate.getFullYear();
+
+                        row["Date"] = `${day}-${month}-${year}`;
+
+                    }
+
+                    return row;
+
                 });
 
                 console.log(excelData);
@@ -246,6 +314,9 @@
                 `Total Records : ${data.length}`;
 
             document.getElementById("tableContainer").innerHTML = html;
+
+            document.getElementById("status").innerHTML =
+                "Excel uploaded and processed successfully";
 
         }
 
